@@ -3,9 +3,7 @@ import {
   Box,
   Button,
   Tab,
-  Table,
   TableBody,
-  TableCell,
   TableHead,
   TableRow,
   Tabs,
@@ -13,83 +11,35 @@ import {
 } from "@mui/material";
 import {
   ButtonWrapper,
+  CustomTableCell,
   InputWrapper,
   Output,
+  StyledTableCell,
+  Table,
+  TableCell,
   TextField,
+  ZeroTableCell,
 } from "./Vector.styled";
-
-const isPowerOfTwo = (length: number) => {
-  return length > 0 && (length & (length - 1)) === 0;
-};
-
-const binaryToDecimal = (binaryString: string): number => {
-  return parseInt(binaryString, 2);
-};
-
-function bitwiseXORMatrix(binaryString: string) {
-  // Convert binary string to an array of numbers
-  let qVec = binaryString.split("").map((char) => parseInt(char, 2));
-  let len = qVec.length;
-  let mat1 = Array.from({ length: len }, (_, i) =>
-    Array.from({ length: len }, (_, j) => qVec[i] ^ qVec[j])
-  );
-  return mat1;
-}
-
-function extractValues(valuesMatrix, indicesMatrix) {
-  return valuesMatrix.map((row, rowIndex) =>
-    row.map(
-      (_, colIndex) => valuesMatrix[rowIndex][indicesMatrix[rowIndex][colIndex]]
-    )
-  );
-}
-
-// Example usage
-const binaryString = "0101";
-const decimalNumber = binaryToDecimal(binaryString);
-console.log(decimalNumber); // Output: 5
-
-function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
-    </div>
-  );
-}
-
-function getRecodingMatrix(n, init = [[0]], curI = 0) {
-  if (curI === n) {
-    return init;
-  }
-
-  let inc = init.map((row) => row.map((value) => value + (1 << curI))); // Equivalent to 2 ** curI
-  let stacked = init.map((row, i) => [...row, ...inc[i]]);
-  let invStacked = inc.map((row, i) => [...row, ...init[i]]);
-
-  return getRecodingMatrix(n, [...stacked, ...invStacked], curI + 1);
-}
+import {
+  getBitwiseXORMatrix,
+  extractValues,
+  getRecodingMatrix,
+  isPowerOfTwo,
+} from "./utils";
+import { TabPanel } from "../components";
 
 export const Vector = () => {
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [tab, setTab] = useState(0);
-  const [recodingMatrix, setRecodingMatrix] = useState();
-  const [xorMatrix, setXorMatrix] = useState();
-  const [testCoverage, setTestCoverage] = useState();
+  const [recodingMatrix, setRecodingMatrix] = useState<number[][]>();
+  const [xorMatrix, setXorMatrix] = useState<number[][]>();
+  const [deductiveMatrix, setDeductiveMatrix] = useState<number[][]>();
+  const [savedValue, setSavedValue] = useState("");
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
-
-  console.log(2);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -110,27 +60,16 @@ export const Vector = () => {
   };
 
   const handleGenerate = () => {
-    const number = binaryToDecimal(value);
-    const matrix = getRecodingMatrix(Math.log2(value.length));
+    setSavedValue(value);
 
-    setRecodingMatrix(matrix);
+    const recordingMatrix = getRecodingMatrix(Math.log2(value.length));
+    const xorMatrix = getBitwiseXORMatrix(value);
+    const deductiveMatrix = extractValues(xorMatrix, recordingMatrix);
 
-    const matrix2 = bitwiseXORMatrix(value);
-    setXorMatrix(matrix2);
-
-    const matrix3 = extractValues(matrix2, matrix);
-    setTestCoverage(matrix3);
-
-    console.log({
-      value,
-      number,
-      recodingMatrix: matrix,
-      xorMatrix: matrix2,
-      testCoverage: matrix3,
-    });
+    setRecodingMatrix(recordingMatrix);
+    setXorMatrix(xorMatrix);
+    setDeductiveMatrix(deductiveMatrix);
   };
-  // add color to 0 and 1
-  // add more saturate color to higher value
 
   return (
     <>
@@ -139,10 +78,12 @@ export const Vector = () => {
           label="Enter vector"
           variant="outlined"
           value={value}
-          placeholder="00100111"
           onChange={handleChange}
           error={!!error}
           helperText={error}
+          onKeyDown={({ key }: React.KeyboardEvent<HTMLInputElement>) => {
+            if (key === "Enter") handleGenerate();
+          }}
         />
         <ButtonWrapper>
           <Button
@@ -164,79 +105,85 @@ export const Vector = () => {
           >
             <Tab label="XOR Matrix" />
             <Tab label="Recoding Matrix" />
-            <Tab label="Test Coverage" />
+            <Tab label="Deductive Matrix" />
           </Tabs>
         </Box>
-        <CustomTabPanel value={tab} index={0} style={{ overflowX: "auto" }}>
+        <TabPanel value={tab} index={0}>
           {xorMatrix && (
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell></TableCell>
-                  {value.split("").map((char, index) => (
-                    <TableCell key={index}>
-                      <Typography
-                        variant="body1"
-                        fontWeight="bold"
-                        style={{ background: "black" }}
-                      >
-                        {char}
-                      </Typography>
-                    </TableCell>
+                  {savedValue.split("").map((char, index) => (
+                    <StyledTableCell align="center" key={index}>
+                      {char}
+                    </StyledTableCell>
                   ))}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {xorMatrix.map((row, rowIndex) => (
                   <TableRow key={rowIndex}>
-                    <TableCell>
-                      <Typography
-                        variant="body1"
-                        fontWeight="bold"
-                        style={{ background: "black" }}
-                      >
-                        {value[rowIndex]}
-                      </Typography>
-                    </TableCell>
-                    {row.map((cell, cellIndex) => (
-                      <TableCell key={cellIndex}>
-                        <Typography variant="body1" fontWeight="bold">
-                          {cell}
-                        </Typography>
-                      </TableCell>
-                    ))}
+                    <StyledTableCell align="center">
+                      {savedValue[rowIndex]}
+                    </StyledTableCell>
+                    {row.map((cell, cellIndex) =>
+                      cell === 1 ? (
+                        <TableCell align="center" key={cellIndex}>
+                          <Typography variant="body1">{cell}</Typography>
+                        </TableCell>
+                      ) : (
+                        <ZeroTableCell align="center" key={cellIndex}>
+                          <Typography variant="body1">{cell}</Typography>
+                        </ZeroTableCell>
+                      )
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           )}
-        </CustomTabPanel>
-        <CustomTabPanel value={tab} index={1} style={{ overflowX: "auto" }}>
-          <Table>
+        </TabPanel>
+        <TabPanel value={tab} index={1}>
+          <Table style={{ width: "unset" }}>
             <TableBody>
               {recodingMatrix?.map((row, rowIndex) => (
                 <TableRow key={rowIndex}>
                   {row.map((cell, cellIndex) => (
-                    <TableCell key={cellIndex}>{cell}</TableCell>
+                    <CustomTableCell
+                      align="center"
+                      key={cellIndex}
+                      value={cell}
+                    >
+                      {cell}
+                    </CustomTableCell>
                   ))}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </CustomTabPanel>
-        <CustomTabPanel value={tab} index={2} style={{ overflowX: "auto" }}>
-          <Table>
+        </TabPanel>
+        <TabPanel value={tab} index={2}>
+          <Table style={{ width: "unset" }}>
             <TableBody>
-              {testCoverage?.map((row, rowIndex) => (
+              {deductiveMatrix?.map((row, rowIndex) => (
                 <TableRow key={rowIndex}>
-                  {row.map((cell, cellIndex) => (
-                    <TableCell key={cellIndex}>{cell}</TableCell>
-                  ))}
+                  {row.map((cell, cellIndex) =>
+                    cell === 1 ? (
+                      <TableCell align="center" key={cellIndex}>
+                        {cell}
+                      </TableCell>
+                    ) : (
+                      <ZeroTableCell align="center" key={cellIndex}>
+                        {cell}
+                      </ZeroTableCell>
+                    )
+                  )}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </CustomTabPanel>
+        </TabPanel>
       </Output>
     </>
   );
