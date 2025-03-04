@@ -1,12 +1,15 @@
-import './App.css';
-import { Main, Textarea } from './App.styled';
-import { TextField } from './TextField';
-import { Box, Tab, Tabs, ThemeProvider, createTheme } from '@mui/material';
-import { useState } from 'react';
+import "./App.css";
+import { Main, Textarea } from "./App.styled";
+import { Vector } from "./Vector";
+import { Box, Tab, Tabs, ThemeProvider, createTheme } from "@mui/material";
+import { useState } from "react";
 
 const theme = createTheme({
   palette: {
-    mode: 'dark',
+    mode: "dark",
+    primary: {
+      main: "#b49cf5",
+    },
   },
 });
 
@@ -21,7 +24,7 @@ function CustomTabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box>{children}</Box>}
     </div>
   );
 }
@@ -36,18 +39,19 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <Main>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={value}
             onChange={handleChange}
             aria-label="basic tabs example"
+            centered
           >
             <Tab label="Vector" />
             <Tab label="JSON" />
           </Tabs>
         </Box>
         <CustomTabPanel value={value} index={0}>
-          <TextField />
+          <Vector />
         </CustomTabPanel>
         <CustomTabPanel value={value} index={1}>
           <Textarea
