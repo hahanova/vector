@@ -7,6 +7,9 @@ import { TabPanel } from "./components";
 import { Json } from "./Json";
 import { MainTabPanel } from "./components/MainTabPanel";
 import { theme } from "./theme";
+import packageJson from '../package.json';
+
+console.log(`Version: ${packageJson.version}`);
 
 function App() {
   const [value, setValue] = useState(0);
