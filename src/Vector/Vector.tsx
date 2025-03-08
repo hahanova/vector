@@ -25,6 +25,8 @@ import {
   extractValues,
   getRecodingMatrix,
   isPowerOfTwo,
+  createTestMap,
+  getTruthTable,
 } from "./utils";
 import { TabPanel } from "../components";
 
@@ -35,7 +37,9 @@ export const Vector = () => {
   const [recodingMatrix, setRecodingMatrix] = useState<number[][]>();
   const [xorMatrix, setXorMatrix] = useState<number[][]>();
   const [deductiveMatrix, setDeductiveMatrix] = useState<number[][]>();
+  const [testCoverage, setTestCoverage] = useState<number[][]>();
   const [savedValue, setSavedValue] = useState("");
+  const [truthTable, setTruthTable] = useState<string[]>([]);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
@@ -65,10 +69,14 @@ export const Vector = () => {
     const recordingMatrix = getRecodingMatrix(Math.log2(value.length));
     const xorMatrix = getBitwiseXORMatrix(value);
     const deductiveMatrix = extractValues(xorMatrix, recordingMatrix);
+    const truthTable = getTruthTable(Math.log2(value.length));
+    const testCoverage = createTestMap(truthTable, deductiveMatrix);
 
     setRecodingMatrix(recordingMatrix);
     setXorMatrix(xorMatrix);
     setDeductiveMatrix(deductiveMatrix);
+    setTruthTable(truthTable);
+    setTestCoverage(testCoverage);
   };
 
   return (
@@ -106,6 +114,7 @@ export const Vector = () => {
             <Tab label="XOR Matrix" />
             <Tab label="Recoding Matrix" />
             <Tab label="Deductive Matrix" />
+            <Tab label="Test Coverage" />
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
@@ -183,6 +192,48 @@ export const Vector = () => {
               ))}
             </TableBody>
           </Table>
+        </TabPanel>
+        <TabPanel value={tab} index={3}>
+          {testCoverage && (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell></TableCell>
+                  {truthTable.map((char, index) => (
+                    <StyledTableCell align="center" key={`${char}-${index}`}>
+                      {char}
+                    </StyledTableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {testCoverage.map((row, rowIndex) => (
+                  <TableRow key={truthTable[rowIndex]}>
+                    <StyledTableCell align="center">
+                      {truthTable[rowIndex]}
+                    </StyledTableCell>
+                    {row.map((cell, cellIndex) =>
+                      cell ? (
+                        <TableCell
+                          align="center"
+                          key={`${truthTable[rowIndex]}-${cellIndex}`}
+                        >
+                          <Typography variant="body1">{cell}</Typography>
+                        </TableCell>
+                      ) : (
+                        <ZeroTableCell
+                          align="center"
+                          key={`${truthTable[rowIndex]}-${cellIndex}`}
+                        >
+                          <Typography variant="body1">{cell}</Typography>
+                        </ZeroTableCell>
+                      )
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </TabPanel>
       </Output>
     </>

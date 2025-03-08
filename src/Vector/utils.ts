@@ -70,3 +70,29 @@ export const getContrastRatio = (
 
   return (Math.max(lum1, lum2) + 0.05) / (Math.min(lum1, lum2) + 0.05);
 };
+
+export const createTestMap = (
+  inputs: string[],
+  recodedMat: number[][]
+): string[][] => {
+  const npInputs = inputs.map((i) => Array.from(i).map(Number));
+  const invMat: number[][][] = npInputs.map((row) =>
+    Array(npInputs.length).fill(row)
+  );
+
+  const updatedInvMat = invMat.map((row, i) =>
+    row.map((cell, j) =>
+      cell.map((subCell, k) => (npInputs[j][k] === 1 ? 1 - subCell : "."))
+    )
+  );
+
+  return updatedInvMat.map((row, i) =>
+    row.map((cell, j) => (recodedMat[i][j] === 0 ? "" : cell.join("")))
+  );
+};
+
+export const getTruthTable = (n: number) => {
+  return Array.from({ length: 2 ** n }, (_, i) =>
+    i.toString(2).padStart(n, "0")
+  );
+};

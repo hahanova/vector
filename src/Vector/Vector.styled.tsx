@@ -27,18 +27,20 @@ export const Output = styled.div`
   margin-top: 4em;
 `;
 
-export const StyledTableCell = styled(MuiTableCell)`
-  padding: 8px 16px;
+export const TableCell = styled(MuiTableCell)`
   font-size: 1rem;
+  padding: 4px 11px;
+  border-right: 1px solid rgba(81, 81, 81, 1);
+`;
+
+export const StyledTableCell = styled(TableCell)`
   background-color: #58516b;
   font-weight: 500;
 `;
 
-export const ZeroTableCell = styled(MuiTableCell)(
+export const ZeroTableCell = styled(TableCell)(
   ({ theme }) => css`
     background-color: ${theme.palette.background.zeroCell};
-    padding: 8px 16px;
-    font-size: 1rem;
   `
 );
 
@@ -50,7 +52,7 @@ interface CustomTableCellProps extends TableCellProps {
   value: number;
 }
 
-export const CustomTableCell = styled(MuiTableCell)<CustomTableCellProps>(({
+export const CustomTableCell = styled(TableCell)<CustomTableCellProps>(({
   value,
 }) => {
   const backgroundColor = interpolateColor(value);
@@ -61,12 +63,5 @@ export const CustomTableCell = styled(MuiTableCell)<CustomTableCellProps>(({
   return {
     backgroundColor,
     color: contrast < 4.5 ? "black" : "white", // Use black text if contrast is too low
-    fontSize: "1rem",
-    padding: "8px 16px",
   };
 });
-
-export const TableCell = styled(MuiTableCell)`
-  padding: 8px 16px;
-  font-size: 1rem;
-`;
