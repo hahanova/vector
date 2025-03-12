@@ -124,7 +124,7 @@ export const Vector = () => {
                 <TableRow>
                   <TableCell></TableCell>
                   {savedValue.split("").map((char, index) => (
-                    <StyledTableCell align="center" key={index}>
+                    <StyledTableCell align="center" key={index} isThin>
                       {char}
                     </StyledTableCell>
                   ))}
@@ -154,44 +154,74 @@ export const Vector = () => {
           )}
         </TabPanel>
         <TabPanel value={tab} index={1}>
-          <Table style={{ width: "unset" }}>
-            <TableBody>
-              {recodingMatrix?.map((row, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {row.map((cell, cellIndex) => (
-                    <CustomTableCell
-                      align="center"
-                      key={cellIndex}
-                      value={cell}
-                    >
-                      {cell}
-                    </CustomTableCell>
+          {recodingMatrix && (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell></TableCell>
+                  {truthTable.map((char, index) => (
+                    <StyledTableCell align="center" key={`${char}-${index}`}>
+                      {char}
+                    </StyledTableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {recodingMatrix.map((row, rowIndex) => (
+                  <TableRow key={truthTable[rowIndex]}>
+                    <StyledTableCell align="center">
+                      {truthTable[rowIndex]}
+                    </StyledTableCell>
+                    {row.map((cell, cellIndex) => (
+                      <CustomTableCell
+                        align="center"
+                        key={cellIndex}
+                        value={cell}
+                      >
+                        {cell}
+                      </CustomTableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </TabPanel>
         <TabPanel value={tab} index={2}>
-          <Table style={{ width: "unset" }}>
-            <TableBody>
-              {deductiveMatrix?.map((row, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {row.map((cell, cellIndex) =>
-                    cell === 1 ? (
-                      <TableCell align="center" key={cellIndex}>
-                        {cell}
-                      </TableCell>
-                    ) : (
-                      <ZeroTableCell align="center" key={cellIndex}>
-                        {cell}
-                      </ZeroTableCell>
-                    )
-                  )}
+          {deductiveMatrix && (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell></TableCell>
+                  {truthTable.map((char, index) => (
+                    <StyledTableCell align="center" key={`${char}-${index}`}>
+                      {char}
+                    </StyledTableCell>
+                  ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {deductiveMatrix.map((row, rowIndex) => (
+                  <TableRow key={truthTable[rowIndex]}>
+                    <StyledTableCell align="center">
+                      {truthTable[rowIndex]}
+                    </StyledTableCell>
+                    {row.map((cell, cellIndex) =>
+                      cell === 1 ? (
+                        <TableCell align="center" key={cellIndex}>
+                          {cell}
+                        </TableCell>
+                      ) : (
+                        <ZeroTableCell align="center" key={cellIndex}>
+                          {cell}
+                        </ZeroTableCell>
+                      )
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </TabPanel>
         <TabPanel value={tab} index={3}>
           {testCoverage && (
