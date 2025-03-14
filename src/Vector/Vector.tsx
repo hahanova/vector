@@ -114,7 +114,7 @@ export const Vector = () => {
             <Tab label="XOR Matrix" />
             <Tab label="Recoding Matrix" />
             <Tab label="Deductive Matrix" />
-            <Tab label="Test Coverage" />
+            <Tab label="Testing Map" />
           </Tabs>
         </Box>
         <TabPanel value={tab} index={0}>
