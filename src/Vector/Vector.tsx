@@ -108,7 +108,7 @@ export const Vector = () => {
           <Tabs
             value={tab}
             onChange={handleTabChange}
-            aria-label="basic tabs example"
+            aria-label="Vector matrices"
             centered
           >
             <Tab label="XOR Matrix" />

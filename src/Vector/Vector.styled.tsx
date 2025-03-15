@@ -24,6 +24,7 @@ export const ButtonWrapper = styled.div`
 `;
 
 export const Output = styled.div`
+  width: 100%;
   margin-top: 4em;
 `;
 
@@ -42,7 +43,7 @@ export const StyledTableCell = styled(TableCell)<{ isThin?: boolean }>(
 );
 
 export const ZeroTableCell = styled(TableCell)(
-  ({ theme }: { theme: Theme }) => css`
+  ({ theme }) => css`
     background-color: ${theme.palette.background.zeroCell};
   `
 );
