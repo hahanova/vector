@@ -22,7 +22,9 @@ export function extractFromVec(inputs: number[], vec: string[]) {
     for (const tentativeValues of truthTable(noneIdx.length)) {
       const newInputs = [...inputs];
 
-      noneIdx.forEach((idx, i) => (newInputs[idx] = parseInt(tentativeValues[i])));
+      noneIdx.forEach(
+        (idx, i) => (newInputs[idx] = parseInt(tentativeValues[i]))
+      );
 
       const inputStr = newInputs.join("");
 
@@ -31,12 +33,11 @@ export function extractFromVec(inputs: number[], vec: string[]) {
 
     return new Set(outputs).size === 1 ? parseInt(outputs[0]) : -1;
   } else {
-    const  inputStr = inputs.join("");
+    const inputStr = inputs.join("");
 
     return vec[str2decimal(inputStr)];
   }
 }
-
 
 // BaseComponent class
 export class BaseComponent {
@@ -59,56 +60,52 @@ export class InputComponent extends BaseComponent {
     return this.value;
   }
 }
-
-// Scheme class
 export class Scheme {
   constructor(inputs, outputs, components = null) {
-    this.inputs = inputs;
-    this.outputs = outputs;
-    this.components = components;
-    // Initialize modeling_vector with -1s (similar to numpy.ones with negative values)
-    const length =
-      (components ? Object.keys(components).length : 0) + inputs.length + 1;
-    this.modeling_vector = new Array(length).fill(-1);
+    this.inputs = inputs; // Array of input indices
+    this.outputs = outputs; // Array of output indices
+    this.components = components || {}; // Object mapping IDs to components
+    this.modeling_vector = new Array(
+      (components ? Object.keys(components).length : 0) + inputs.length + 1
+    ).fill(-1); // Mimics -np.ones
   }
 
+  // Callable method to process input string and return output
   call(x) {
-    this.setInput(x);
+    this.set_input(x);
     return this.outputs
-      .map((o) => {
-        const component = this.components[o];
-        const inputValues = component.inputs.map(
-          (i) => this.modeling_vector[i]
-        );
-        return String(component.call(inputValues));
-      })
+      .map((o) =>
+        this.components[o](this.modeling_vector[this.components[o].inputs])
+      )
       .join("");
   }
 
-  fullSimulate() {
-    const inputs = this.truthTable(this.inputs.length);
+  // Full simulation with truth table
+  full_simulate() {
+    const inputs = truth_table(this.inputs.length); // Assuming truth_table is defined elsewhere
     const outputs = inputs.map((input) => this.call(input));
     return [inputs, outputs];
   }
 
-  setInput(x) {
+  // Set input values in modeling_vector
+  set_input(x) {
     const filteredX = x
       .split("")
       .filter((i) => i === "0" || i === "1")
       .map((i) => parseInt(i));
     this.inputs.forEach((inputIdx, i) => {
-      this.modeling_vector[inputIdx] = filteredX[i] || 0;
+      this.modeling_vector[inputIdx] = filteredX[i];
     });
   }
 
+  // Reset all components
   reset() {
     Object.values(this.components).forEach((c) => c.reset());
   }
 
-  static fromDict(dict_) {
-    if (Object.keys(dict_).length === 0) {
-      throw new Error("Config is empty");
-    }
+  // Static method to create Scheme from a dictionary
+  static from_dict(dict_) {
+    if (Object.keys(dict_).length === 0) throw new Error("Config is empty");
 
     const scheme_inputs = [];
     const scheme_outputs = [];
@@ -118,6 +115,7 @@ export class Scheme {
       id_ = parseInt(id_);
       const element = new VectorComponent(
         id_,
+        null,
         dict_element.vector,
         dict_element.is_input || false
       );
@@ -139,128 +137,148 @@ export class Scheme {
     return new Scheme(scheme_inputs, scheme_outputs, components);
   }
 
+  // Simulation matrix for a given input
   simulationMatrixForInput(input) {
-    this.setInput(input);
+    this.set_input(input);
 
-    // Simplified matrix representation using plain JS object
-    const componentIds = Object.keys(this.components)
-      .map((id) => parseInt(id))
+    const componentNames = Object.keys(this.components)
+      .map((c) => parseInt(c))
       .sort((a, b) => a - b);
-    const nLines = Math.max(...componentIds);
+    const nLines = Math.max(...componentNames);
 
-    // Create basic matrix structure
-    const canvas = {
-      data: {},
-      columns: Array.from({ length: nLines }, (_, i) => i + 1),
-      rows: [
-        ...Array.from({ length: nLines }, (_, i) => i + 1),
-        "sum V",
-        "good",
-        "fault",
-      ],
-    };
+    // Initialize canvas as a 2D object
+    let canvas = {};
+    const indexLabels = [...Array(nLines).keys()]
+      .map((i) => i + 1)
+      .concat(["sum V", "good", "fault"]);
+    const columnLabels = [...Array(nLines).keys()].map((i) => i + 1);
 
-    // Initialize with identity matrix plus extra rows
-    canvas.rows.forEach((row) => {
-      canvas.data[row] = {};
-      canvas.columns.forEach((col) => {
+    for (let row of indexLabels) {
+      canvas[row] = {};
+      for (let col of columnLabels) {
         if (row === col && typeof row === "number") {
-          canvas.data[row][col] = 1;
+          canvas[row][col] = 1;
         } else if (typeof row === "number") {
-          canvas.data[row][col] = 0;
+          canvas[row][col] = 0;
         } else {
-          canvas.data[row][col] = "";
+          canvas[row][col] = 0;
         }
-      });
-    });
-
-    // Simulation logic
-    for (let i = 0; i < 3; i++) {
-      for (let [id_, c] of Object.entries(this.components)) {
-        id_ = parseInt(id_);
-        const inputValues = c.inputs.map((idx) => this.modeling_vector[idx]);
-        this.modeling_vector[id_] = c.call(inputValues);
       }
     }
 
-    // Fill good values
+    const outputComponents = [...this.outputs];
+
+    // Simulate 3 iterations
+    for (let i = 0; i < 3; i++) {
+      for (let [id_, c] of Object.entries(this.components)) {
+        id_ = parseInt(id_);
+        this.modeling_vector[id_] = c.call(
+          c.inputs.map((a) => this.modeling_vector[a])
+        );
+      }
+    }
+
+    // Populate 'good' row and compute values
     this.modeling_vector.forEach((val, id_) => {
       if (id_ === 0) return;
-      canvas.data["good"][id_] = val === -1 ? "x" : val;
+      if (val === -1) val = "x";
+      canvas["good"][id_] = val;
+      if (id_ in this.components) {
+        const c = this.components[id_];
+        if (Math.min(...c.inputs.map((a) => this.modeling_vector[a])) >= 0) {
+          // debugger;
+          c.computeDVec(c.inputs.map((a) => this.modeling_vector[a]));
+          const inputs_i = c.inputs;
+
+          for (let subId = 1; subId < this.modeling_vector.length; subId++) {
+            if (subId === id_) continue;
+            const inputs = inputs_i.map((input) => canvas[input][subId]);
+            const output = extractFromVec(inputs, c.d_vec); // Placeholder function
+            canvas[id_][subId] = Number(output);
+          }
+        }
+      }
     });
-    // Rest of the simulation logic would need to be adapted based on VectorComponent implementation
-    // This is a simplified version and would need the full VectorComponent class to be complete
+
+    // Compute 'sum V' row
+    // Compute 'sum V' row
+    canvas["sum V"] = columnLabels.map((col) => {
+      const columnValues = outputComponents.map((row) => canvas[row][col]);
+      return columnValues.reduce((a, b) => a || b, 0) ? 1 : 0;
+    });
+    columnLabels.forEach((col) => {
+      if (canvas["sum V"][col] === 0) canvas["sum V"][col] = "";
+    });
+
+    // Compute 'fault' row
+    for (let id_ = 1; id_ < this.modeling_vector.length; id_++) {
+      if (canvas["sum V"][id_] === 1 && canvas["good"][id_] !== "x") {
+        canvas["fault"][id_] = 1 - canvas["good"][id_];
+      } else {
+        canvas["fault"][id_] = "";
+      }
+    }
 
     return canvas;
   }
 
+  // Data structure canvas
   dataStructureCanvas() {
     const maxInputs = Math.max(
       ...Object.values(this.components)
         .filter((c) => c instanceof VectorComponent)
         .map((c) => c.inputs.length)
     );
-
-    const componentIds = Object.keys(this.components)
-      .map((id) => parseInt(id))
+    const componentNames = Object.keys(this.components)
+      .map((c) => parseInt(c))
       .sort((a, b) => a - b);
 
-    // Create canvas structure
+    // Initialize canvas
+    const canvas = {};
     const columns = [
       ...Array(maxInputs ** 2)
-        .fill()
-        .map((_, i) => `D${i}`),
+        .keys()
+        .map((i) => `D${i}`),
       ...Array(maxInputs ** 2)
-        .fill()
-        .map((_, i) => `Q${i}`),
+        .keys()
+        .map((i) => `Q${i}`),
       ...Array(maxInputs)
-        .fill()
-        .map((_, i) => `I${i}`),
+        .keys()
+        .map((i) => `I${i}`),
       "OUTPUTS",
     ];
+    const indexLabels = [...componentNames, "sum V", "good", "fault"];
 
-    const canvas = {
-      data: {},
-      columns: columns,
-      rows: [...componentIds, "sum V", "good", "fault"],
-    };
+    for (let row of indexLabels) {
+      canvas[row] = {};
+      for (let col of columns) {
+        canvas[row][col] = "";
+      }
+    }
 
-    // Initialize with empty strings
-    canvas.rows.forEach((row) => {
-      canvas.data[row] = {};
-      columns.forEach((col) => (canvas.data[row][col] = ""));
-    });
-
-    // Fill data
+    // Populate canvas
     for (let [k, c] of Object.entries(this.components)) {
       k = parseInt(k);
       if (c instanceof VectorComponent && !c.is_input) {
-        c.vector?.forEach((v, i) => {
-          canvas.data[k][`Q${i}`] = parseInt(v);
+        c.vector.forEach((v, i) => {
+          canvas[k][`Q${i}`] = parseInt(v);
         });
-        c.d_vec?.forEach((v, i) => {
-          canvas.data[k][`D${i}`] = parseInt(v);
-        });
+        if (c.d_vec !== null) {
+          c.d_vec.forEach((v, i) => {
+            canvas[k][`D${i}`] = parseInt(v);
+          });
+        }
         c.inputs.forEach((v, i) => {
-          canvas.data[k][`I${i}`] = v;
+          canvas[k][`I${i}`] = v;
         });
       }
     }
 
-    this.outputs.forEach((out, i) => {
-      canvas.data[canvas.rows[i]]["OUTPUTS"] = out;
+    this.outputs.forEach((output, i) => {
+      canvas[indexLabels[i]]["OUTPUTS"] = output;
     });
 
     return canvas;
-  }
-
-  // Helper method (would typically be separate)
-  truthTable(n) {
-    const result = [];
-    for (let i = 0; i < 2 ** n; i++) {
-      result.push(i.toString(2).padStart(n, "0"));
-    }
-    return result;
   }
 }
 
@@ -281,16 +299,18 @@ export class VectorComponent {
     }
 
     // Convert values to integers and extract output from vector
-    const intValues = values.map((value) => parseInt(value));
+    const intValues = values?.map((value) => parseInt(value));
     const output = this.extractFromVec(intValues, this.vector);
-    this.value = output;
-    return output;
+    this.value = Number(output);
+
+    return Number(output);
   }
 
   fullSimulate() {
     const inputCount = Math.log2(this.vector.length);
     const inputs = this.truthTable(inputCount);
     const outputs = inputs.map((input) => this.call(input));
+
     return [inputs, outputs];
   }
 
@@ -302,35 +322,24 @@ export class VectorComponent {
     // Create table of inputs and outputs
     const table = inputs.map((input, i) => [
       ...input.split("").map(Number),
-      outputs[i],
+      Number(outputs[i]),
     ]);
 
     // Create test input array
-    const testInput = [...values.map((v) => parseInt(v)), this.call(values)];
+    const testInput = [...values?.map((v) => parseInt(v)), this.call(values)];
 
     // XOR operation between testInput and table
     const table2 = table.map((row) => row.map((val, i) => val ^ testInput[i]));
 
-    // Sort based on all columns except the last one (output)
-    const table3 = table2[0].map((_, colIndex) =>
-      table2.map((row) => row[colIndex])
-    ); // Transpose
+    const table3 = table2.slice().sort((a, b) => {
+      for (let i = 0; i < 2; i++) {
+        if (a[i] !== b[i]) return a[i] - b[i];
+      }
+      return 0;
+    });
 
     // Sort columns based on all rows except last (similar to np.lexsort)
-    const sortedIndices = table3
-      .slice(0, -1)
-      .map((_, i) => i)
-      .sort((a, b) => {
-        for (let row = 0; row < table3.length - 1; row++) {
-          if (table3[row][a] !== table3[row][b]) {
-            return table3[row][b] - table3[row][a]; // Reverse order
-          }
-        }
-        return 0;
-      });
-
-    // Apply sorting to last row to get d_vec
-    this.d_vec = sortedIndices.map((i) => table3[table3.length - 1][i]);
+    this.d_vec = table3.map((row) => row[row.length - 1]);
   }
 
   toString() {
@@ -349,39 +358,13 @@ export class VectorComponent {
   }
 
   extractFromVec(values, vector) {
+    if (Array.isArray(vector)) vector = vector.join("");
+
     // Convert binary values array to decimal index
-    const index = values.reduce(
+    const index = values?.reduce(
       (acc, val, i) => acc + val * 2 ** (values.length - 1 - i),
       0
     );
     return vector[index];
   }
 }
-
-// const scheme = Scheme.fromDict(SCHEME);
-
-// console.log("scheme", scheme);
-
-// const output_table_obj = {};
-// const component_names_obj = Object.keys(scheme.components)
-//   .map((c) => parseInt(c))
-//   .sort((a, b) => a - b);
-// const inputs_obj = getTruthTable(scheme.inputs.length);
-// // const output_components = [i for i in scheme.outputs];
-// const output_components_obj = scheme.outputs.slice();
-
-// console.log("inputs_obj", inputs_obj);
-
-// const output1 = inputs_obj.map((input_, input_i) => {
-//   const input_name = `${input_i}_${input_}`;
-//   const simulation_matrix = scheme.simulationMatrixForInput(input_);
-
-//   // console.log(1, simulation_matrix);
-
-//   return {
-//     input_name,
-//     simulation_matrix,
-//   };
-// });
-
-// console.log("output1", output1);

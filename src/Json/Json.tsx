@@ -1,5 +1,17 @@
 import { useLayoutEffect, useState } from "react";
-import { Box, Button, FormLabel, Tab, Tabs } from "@mui/material";
+import {
+  Box,
+  Button,
+  FormLabel,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Tabs,
+  Typography,
+} from "@mui/material";
 
 import {
   ButtonWrapper,
@@ -10,7 +22,11 @@ import {
 } from "./Json.styled";
 import { getTruthTable } from "../Vector/utils";
 
-import { Output } from "../Vector/Vector.styled";
+import {
+  Output,
+  StyledTableCell,
+  ZeroTableCell,
+} from "../Vector/Vector.styled";
 import { TabPanel } from "../components";
 import CONFIGURATION_EXAMPLE from "./configuration-example.json";
 import { Scheme } from "./utils";
@@ -58,6 +74,8 @@ export const Json = () => {
       setShouldScrollToTop(false);
     }
   }, [shouldScrollToTop]);
+  const [output2, setOutput2] = useState<any>([]);
+  const [dVec] = useState<any>({});
 
   const handleGenerate = () => {
     const parsedJson = validateAndParseJson(value);
@@ -69,41 +87,39 @@ export const Json = () => {
     setValue(formattedJson);
 
     try {
-      const scheme = Scheme.fromDict(parsedJson);
+      const scheme = Scheme.from_dict(parsedJson);
       const inputs_obj = getTruthTable(scheme.inputs.length);
+      const output2 = inputs_obj.reduce((acc, input) => {
+        acc[input] = scheme.simulationMatrixForInput(input);
+        dVec[input] = JSON.parse(JSON.stringify(scheme?.components));
 
-      const output1 = inputs_obj.map((input_, input_i) => {
-        const input_name = `${input_i}_${input_}`;
-        const simulation_matrix = scheme.simulationMatrixForInput(input_);
-
-        return {
-          input_name,
-          simulation_matrix,
-        };
-      });
+        return acc;
+      }, {});
 
       setTruthTable(inputs_obj);
 
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 
-      console.log("Output:", {
-        parsedJson,
-        scheme,
-        inputs_obj,
-        output1,
-      });
+      // console.log("Output:", {
+      //   parsedJson,
+      //   scheme,
+      //   inputs_obj,
+      //   output1,
+      //   output2,
+      //   dVec,
+      // });
+
+      setOutput2(output2);
     } catch (error) {
       setError("This JSON cannot be processed, try with another one");
-      console.error((error as Error).message);
+      console.error(error);
     }
   };
 
   return (
     <Wrapper>
       <LabelWrapper>
-        <FormLabel htmlFor="configuration">
-          Enter scheme configuration:
-        </FormLabel>
+        <FormLabel htmlFor="configuration">Enter circuit:</FormLabel>
         <Button
           onClick={() => {
             if (error) {
@@ -128,7 +144,7 @@ export const Json = () => {
           setValue(target.value);
         }}
         hasError={Boolean(error)}
-        aria-label="Enter scheme configuration"
+        aria-label="Enter circuit"
       />
       {error && <ErrorMessage>{error}</ErrorMessage>}
       <ButtonWrapper>
@@ -152,7 +168,99 @@ export const Json = () => {
         </Box>
         {truthTable.map((input, i) => (
           <TabPanel value={tab} index={i} key={input}>
-            <Box style={{ margin: "2em", marginBottom: "10em" }}>{input}</Box>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell></TableCell>
+                  {Object.keys(output2?.[input]?.["1"] || {}).map(
+                    (char, index) => (
+                      <StyledTableCell align="center" key={index} isThin>
+                        {char}
+                      </StyledTableCell>
+                    )
+                  )}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Object.keys(output2?.[input] || {}).map((rowKey, rowIndex) => (
+                  <TableRow key={rowIndex}>
+                    <StyledTableCell align="center">{rowKey}</StyledTableCell>
+                    {Object.keys(output2[input][rowKey]).map(
+                      (cellKey, cellIndex) => {
+                        const cell = output2[input][rowKey][cellKey];
+                        return cell === 1 ? (
+                          <TableCell align="center" key={cellIndex}>
+                            <Typography variant="body1">{cell}</Typography>
+                          </TableCell>
+                        ) : (
+                          <ZeroTableCell align="center" key={cellIndex}>
+                            <Typography variant="body1">{cell}</Typography>
+                          </ZeroTableCell>
+                        );
+                      }
+                    )}
+                    {dVec?.[input]?.[rowKey]?.d_vec &&
+                      dVec?.[input]?.[rowKey]?.d_vec.map(
+                        (cellKey, cellIndex) => {
+                          return cellKey === 1 ? (
+                            <TableCell align="center" key={cellIndex}>
+                              <Typography
+                                variant="body1"
+                                style={{ color: "yellow" }}
+                              >
+                                {cellKey}
+                              </Typography>
+                            </TableCell>
+                          ) : (
+                            <ZeroTableCell align="center" key={cellIndex}>
+                              <Typography
+                                variant="body1"
+                                style={{ color: "yellow" }}
+                              >
+                                {cellKey}
+                              </Typography>
+                            </ZeroTableCell>
+                          );
+                        }
+                      )}
+                    {dVec?.[input]?.[rowKey]?.inputs &&
+                      dVec?.[input]?.[rowKey]?.inputs.map(
+                        (cellKey, cellIndex) => {
+                          return cellKey === 1 ? (
+                            <TableCell align="center" key={cellIndex}>
+                              <Typography
+                                variant="body1"
+                                style={{ color: "red" }}
+                              >
+                                {cellKey}
+                              </Typography>
+                            </TableCell>
+                          ) : (
+                            <ZeroTableCell align="center" key={cellIndex}>
+                              <Typography
+                                variant="body1"
+                                style={{ color: "red" }}
+                              >
+                                {cellKey}
+                              </Typography>
+                            </ZeroTableCell>
+                          );
+                        }
+                      )}
+                    {dVec?.[input]?.[rowKey]?.vector && (
+                      <TableCell
+                        align="center"
+                        key={dVec?.[input]?.[rowKey]?.vector}
+                      >
+                        <Typography variant="body1">
+                          {dVec?.[input]?.[rowKey]?.vector}
+                        </Typography>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </TabPanel>
         ))}
       </Output>

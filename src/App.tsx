@@ -29,7 +29,7 @@ function App() {
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={tabValue} onChange={handleChange} centered>
             <Tab label="Vector" />
-            <Tab label="Schema" />
+            <Tab label="Circuit" />
           </Tabs>
         </Box>
         <MainTabPanel value={tabValue} index={0}>
