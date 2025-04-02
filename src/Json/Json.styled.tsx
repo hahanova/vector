@@ -9,7 +9,9 @@ export const Wrapper = styled.div`
   margin-top: 2em;
 `;
 
-export const Textarea = styled(TextareaAutosize)<{ hasError?: boolean }>(
+export const Textarea = styled(TextareaAutosize, {
+  shouldForwardProp: (prop) => prop !== "hasError",
+})<{ hasError?: boolean }>(
   ({ hasError, theme: { palette, shape } }) => css`
     margin-top: 2em;
     max-width: 800px;
@@ -19,6 +21,7 @@ export const Textarea = styled(TextareaAutosize)<{ hasError?: boolean }>(
     border-color: ${hasError ? palette.error.main : palette.grey[750]};
     background-color: ${palette.background.field};
     border-radius: ${shape.borderRadius}px;
+    color: white;
 
     &:hover {
       border-color: ${hasError ? palette.error.main : palette.common.white};

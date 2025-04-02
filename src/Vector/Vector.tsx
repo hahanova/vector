@@ -7,18 +7,14 @@ import {
   TableHead,
   TableRow,
   Tabs,
-  Typography,
 } from "@mui/material";
 import {
   ButtonWrapper,
-  CustomTableCell,
   InputWrapper,
   Output,
   StyledTableCell,
   Table,
-  TableCell,
   TextField,
-  ZeroTableCell,
 } from "./Vector.styled";
 import {
   getBitwiseXORMatrix,
@@ -28,7 +24,7 @@ import {
   createTestMap,
   getTruthTable,
 } from "./utils";
-import { TabPanel } from "../components";
+import { BinaryCell, GradientCell, TabPanel, TableCell } from "../components";
 
 export const Vector = () => {
   const [value, setValue] = useState("");
@@ -136,17 +132,9 @@ export const Vector = () => {
                     <StyledTableCell align="center">
                       {savedValue[rowIndex]}
                     </StyledTableCell>
-                    {row.map((cell, cellIndex) =>
-                      cell === 1 ? (
-                        <TableCell align="center" key={cellIndex}>
-                          <Typography variant="body1">{cell}</Typography>
-                        </TableCell>
-                      ) : (
-                        <ZeroTableCell align="center" key={cellIndex}>
-                          <Typography variant="body1">{cell}</Typography>
-                        </ZeroTableCell>
-                      )
-                    )}
+                    {row.map((cell, cellIndex) => (
+                      <BinaryCell key={cellIndex} value={cell} />
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
@@ -173,13 +161,13 @@ export const Vector = () => {
                       {truthTable[rowIndex]}
                     </StyledTableCell>
                     {row.map((cell, cellIndex) => (
-                      <CustomTableCell
+                      <GradientCell
                         align="center"
-                        key={cellIndex}
+                        key={`${cellIndex} + ${cell}`}
                         value={cell}
                       >
                         {cell}
-                      </CustomTableCell>
+                      </GradientCell>
                     ))}
                   </TableRow>
                 ))}
@@ -206,17 +194,9 @@ export const Vector = () => {
                     <StyledTableCell align="center">
                       {truthTable[rowIndex]}
                     </StyledTableCell>
-                    {row.map((cell, cellIndex) =>
-                      cell === 1 ? (
-                        <TableCell align="center" key={cellIndex}>
-                          {cell}
-                        </TableCell>
-                      ) : (
-                        <ZeroTableCell align="center" key={cellIndex}>
-                          {cell}
-                        </ZeroTableCell>
-                      )
-                    )}
+                    {row.map((cell, cellIndex) => (
+                      <BinaryCell key={cellIndex} value={cell} />
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
@@ -242,23 +222,12 @@ export const Vector = () => {
                     <StyledTableCell align="center">
                       {truthTable[rowIndex]}
                     </StyledTableCell>
-                    {row.map((cell, cellIndex) =>
-                      cell ? (
-                        <TableCell
-                          align="center"
-                          key={`${truthTable[rowIndex]}-${cellIndex}`}
-                        >
-                          <Typography variant="body1">{cell}</Typography>
-                        </TableCell>
-                      ) : (
-                        <ZeroTableCell
-                          align="center"
-                          key={`${truthTable[rowIndex]}-${cellIndex}`}
-                        >
-                          <Typography variant="body1">{cell}</Typography>
-                        </ZeroTableCell>
-                      )
-                    )}
+                    {row.map((cell, cellIndex) => (
+                      <BinaryCell
+                        key={`${truthTable[rowIndex]}-${cellIndex}`}
+                        value={cell}
+                      />
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>

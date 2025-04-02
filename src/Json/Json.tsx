@@ -6,10 +6,10 @@ import {
   Tab,
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableRow,
   Tabs,
+  Tooltip,
   Typography,
 } from "@mui/material";
 
@@ -22,14 +22,17 @@ import {
 } from "./Json.styled";
 import { getTruthTable } from "../Vector/utils";
 
-import {
-  Output,
-  StyledTableCell,
-  ZeroTableCell,
-} from "../Vector/Vector.styled";
-import { TabPanel } from "../components";
+import { Output, StyledTableCell } from "../Vector/Vector.styled";
+import { BinaryCell, GradientCell, TabPanel, TableCell } from "../components";
 import CONFIGURATION_EXAMPLE from "./configuration-example.json";
 import { Scheme } from "./utils";
+
+const customColumnNames = [
+  { label: "Input", colSpan: 2 },
+  // { label: "I-set" },
+  { label: "LV", tooltip: "Local Vector" },
+  { label: "DV", tooltip: "Distributed Vector" },
+];
 
 export const Json = () => {
   const [value, setValue] = useState("");
@@ -104,7 +107,6 @@ export const Json = () => {
       //   parsedJson,
       //   scheme,
       //   inputs_obj,
-      //   output1,
       //   output2,
       //   dVec,
       // });
@@ -179,6 +181,13 @@ export const Json = () => {
                       </StyledTableCell>
                     )
                   )}
+                  {customColumnNames.map(({ label, tooltip, colSpan = 1 }) => (
+                    <Tooltip title={tooltip} key={label}>
+                      <StyledTableCell align="center" isThin colSpan={colSpan}>
+                        {label}
+                      </StyledTableCell>
+                    </Tooltip>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -187,66 +196,34 @@ export const Json = () => {
                     <StyledTableCell align="center">{rowKey}</StyledTableCell>
                     {Object.keys(output2[input][rowKey]).map(
                       (cellKey, cellIndex) => {
-                        const cell = output2[input][rowKey][cellKey];
-                        return cell === 1 ? (
-                          <TableCell align="center" key={cellIndex}>
-                            <Typography variant="body1">{cell}</Typography>
-                          </TableCell>
-                        ) : (
-                          <ZeroTableCell align="center" key={cellIndex}>
-                            <Typography variant="body1">{cell}</Typography>
-                          </ZeroTableCell>
-                        );
+                        const value = output2[input][rowKey][cellKey];
+                        const cell = value === 0 && Number(rowKey) ? "" : value;
+
+                        return <BinaryCell key={`${cellIndex}${cell}`} value={cell} />;
                       }
                     )}
-                    {dVec?.[input]?.[rowKey]?.d_vec &&
-                      dVec?.[input]?.[rowKey]?.d_vec.map(
-                        (cellKey, cellIndex) => {
-                          return cellKey === 1 ? (
-                            <TableCell align="center" key={cellIndex}>
-                              <Typography
-                                variant="body1"
-                                style={{ color: "yellow" }}
-                              >
-                                {cellKey}
-                              </Typography>
-                            </TableCell>
-                          ) : (
-                            <ZeroTableCell align="center" key={cellIndex}>
-                              <Typography
-                                variant="body1"
-                                style={{ color: "yellow" }}
-                              >
-                                {cellKey}
-                              </Typography>
-                            </ZeroTableCell>
-                          );
-                        }
-                      )}
-                    {dVec?.[input]?.[rowKey]?.inputs &&
-                      dVec?.[input]?.[rowKey]?.inputs.map(
-                        (cellKey, cellIndex) => {
-                          return cellKey === 1 ? (
-                            <TableCell align="center" key={cellIndex}>
-                              <Typography
-                                variant="body1"
-                                style={{ color: "red" }}
-                              >
-                                {cellKey}
-                              </Typography>
-                            </TableCell>
-                          ) : (
-                            <ZeroTableCell align="center" key={cellIndex}>
-                              <Typography
-                                variant="body1"
-                                style={{ color: "red" }}
-                              >
-                                {cellKey}
-                              </Typography>
-                            </ZeroTableCell>
-                          );
-                        }
-                      )}
+                    {dVec?.[input]?.[rowKey]?.inputs?.map((cell: number) => {
+                      return (
+                        <GradientCell align="center" key={cell} value={cell}>
+                          <Typography variant="body1">{cell}</Typography>
+                        </GradientCell>
+                      );
+                    })}
+
+                    {/* {dVec?.[input]?.[rowKey]?.d_vec && (
+                      <BinaryCell
+                        key={dVec?.[input]?.[rowKey]?.d_vec?.join("").slice(-2)}
+                        value={"_"}
+                      />
+                    )} */}
+
+                    {dVec?.[input]?.[rowKey]?.d_vec && (
+                      <BinaryCell
+                        key={dVec?.[input]?.[rowKey]?.d_vec?.join("")}
+                        value={dVec?.[input]?.[rowKey]?.d_vec?.join("")}
+                      />
+                    )}
+
                     {dVec?.[input]?.[rowKey]?.vector && (
                       <TableCell
                         align="center"
