@@ -1,11 +1,44 @@
-# React + TypeScript + Vite
+# Vector simulation
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 🚀 Start the app
 
-Currently, two official plugins are available:
+- Clone the repo:
+```
+git clone https://github.com/hahanova/vector.git
+```
+- Go to the folder:
+```
+cd ./vector
+```
+- Install dependencies:
+```
+npm i
+```
+- Run the app:
+```
+npm start
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🔧 Deploy the app
+
+- Bump version:
+```
+npm version minor
+```
+- Build the app:
+```
+npm run build:force
+```
+- Copy paste `index.html` file in the `dist` folder and rename a new version to `200.html`. So in the end you `dist` folder will have 2 `html` files: `index.html` and `200.html`.
+
+- Run:
+```
+surge
+```
+- You will be asked to specify the folder with the build, so you should add `dist` in the end, so the line will be looking like: `project: /Users/your-username/Documents/projects/vector/dist`
+- Change the domain name to: `domain: vector-simulation.surge.sh`
+- If in the end you see this ` Success! - Published to vector-simulation.surge.sh`, then it ready.
+- Go to `https://vector-simulation.surge.sh` to check if everything is working, check the published version in the console to be sure.
 
 ## Expanding the ESLint configuration
 
