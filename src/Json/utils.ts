@@ -186,7 +186,6 @@ export class Scheme {
       if (id_ in this.components) {
         const c = this.components[id_];
         if (Math.min(...c.inputs.map((a) => this.modeling_vector[a])) >= 0) {
-          // debugger;
           c.computeDVec(c.inputs.map((a) => this.modeling_vector[a]));
           const inputs_i = c.inputs;
 
@@ -201,11 +200,12 @@ export class Scheme {
     });
 
     // Compute 'sum V' row
-    // Compute 'sum V' row
-    canvas["sum V"] = columnLabels.map((col) => {
+    canvas["sum V"] = columnLabels.reduce((acc, col) => {
       const columnValues = outputComponents.map((row) => canvas[row][col]);
-      return columnValues.reduce((a, b) => a || b, 0) ? 1 : 0;
-    });
+      acc[col] = columnValues.reduce((a, b) => a || b, 0) ? 1 : 0;
+      return acc;
+    }, {});
+
     columnLabels.forEach((col) => {
       if (canvas["sum V"][col] === 0) canvas["sum V"][col] = "";
     });
@@ -291,6 +291,7 @@ export class VectorComponent {
     this.value = value;
     this.processed = false;
     this.is_input = is_input;
+    this.i_set = null;
   }
 
   call(values = null) {
@@ -302,6 +303,7 @@ export class VectorComponent {
     const intValues = values?.map((value) => parseInt(value));
     const output = this.extractFromVec(intValues, this.vector);
     this.value = Number(output);
+    this.i_set = intValues
 
     return Number(output);
   }

@@ -2,6 +2,7 @@ import { useLayoutEffect, useState } from "react";
 import {
   Box,
   Button,
+  CircularProgress,
   FormLabel,
   Tab,
   Table,
@@ -26,12 +27,14 @@ import { Output, StyledTableCell } from "../Vector/Vector.styled";
 import { BinaryCell, GradientCell, TabPanel, TableCell } from "../components";
 import CONFIGURATION_EXAMPLE from "./configuration-example.json";
 import { Scheme } from "./utils";
+// import { getIntegral } from "./calculateMainTable";
+import { FalseSimulationMatrix } from "./FalseSimulationMatrix";
 
 const customColumnNames = [
   { label: "Input", colSpan: 2 },
-  // { label: "I-set" },
-  { label: "LV", tooltip: "Local Vector" },
-  { label: "DV", tooltip: "Distributed Vector" },
+  { label: "I-set", tooltip: "Input Set" },
+  { label: "LV", tooltip: "Logic Vector" },
+  { label: "DV", tooltip: "Deductive Vector" },
 ];
 
 export const Json = () => {
@@ -79,8 +82,12 @@ export const Json = () => {
   }, [shouldScrollToTop]);
   const [output2, setOutput2] = useState<any>([]);
   const [dVec] = useState<any>({});
+  const [falseSimulationMatrix] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
     const parsedJson = validateAndParseJson(value);
 
     if (!parsedJson) return;
@@ -95,23 +102,64 @@ export const Json = () => {
       const output2 = inputs_obj.reduce((acc, input) => {
         acc[input] = scheme.simulationMatrixForInput(input);
         dVec[input] = JSON.parse(JSON.stringify(scheme?.components));
+        // falseSimulationMatrix[input] = []
+
+        // for (let c = 1; c < scheme.modeling_vector.length; c++) {
+        // Initialize row if it doesn't exist
+        if (!falseSimulationMatrix[input]) {
+          falseSimulationMatrix[input] = {};
+        }
+
+        // Set values similar to pandas .at[]
+        falseSimulationMatrix[input]["fault"] = acc[input]["fault"];
+        falseSimulationMatrix[input]["modeling"] = acc[input]["good"];
 
         return acc;
       }, {});
+
+      // Object.keys(falseSimulationMatrix)
+      // getIntegral = ({ scheme, false_simulation_matrix })
+
+      // const integral = {};
+
+      // for (let j = 1; j < scheme.modeling_vector.length; j++) {
+      //   let k = `F${j}`;
+
+      //   // Create a vector indicating non-duplicated values
+      //   let vec = falseSimulationMatrix[k].map((item, index, arr) => {
+      //     return arr.indexOf(item) === index;
+      //   });
+
+      //   // Object.keys(temp1).map(a => temp1[a].fault[1])
+
+      //   // Set empty string positions to false
+      //   vec = vec.map((value, index) => {
+      //     return falseSimulationMatrix[k][index] === "" ? false : value;
+      //   });
+
+      //   // Calculate cumulative sum
+      //   integral[k] = vec.reduce((acc, curr, idx) => {
+      //     if (idx === 0) return [curr ? 1 : 0];
+      //     return [...acc, (curr ? 1 : 0) + acc[idx - 1]];
+      //   }, []);
+      // }
 
       setTruthTable(inputs_obj);
 
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 
-      // console.log("Output:", {
-      //   parsedJson,
-      //   scheme,
-      //   inputs_obj,
-      //   output2,
-      //   dVec,
-      // });
+      console.log("Output:", {
+        parsedJson,
+        scheme,
+        inputs_obj,
+        output2,
+        dVec,
+        falseSimulationMatrix,
+        truthTable,
+      });
 
       setOutput2(output2);
+      setIsLoading(false);
     } catch (error) {
       setError("This JSON cannot be processed, try with another one");
       console.error(error);
@@ -154,6 +202,13 @@ export const Json = () => {
           Generate
         </Button>
       </ButtonWrapper>
+      {isLoading && (
+        <Box style={{ textAlign: "center" }}>
+          <CircularProgress />
+          <Typography>We are creating a vector simulation...</Typography>
+        </Box>
+      )}
+      <FalseSimulationMatrix falseSimulationMatrix={falseSimulationMatrix} />
       <Output>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
@@ -182,7 +237,11 @@ export const Json = () => {
                     )
                   )}
                   {customColumnNames.map(({ label, tooltip, colSpan = 1 }) => (
-                    <Tooltip title={tooltip} key={label}>
+                    <Tooltip
+                      title={tooltip}
+                      key={label}
+                      style={{ cursor: "pointer" }}
+                    >
                       <StyledTableCell align="center" isThin colSpan={colSpan}>
                         {label}
                       </StyledTableCell>
@@ -193,13 +252,35 @@ export const Json = () => {
               <TableBody>
                 {Object.keys(output2?.[input] || {}).map((rowKey, rowIndex) => (
                   <TableRow key={rowIndex}>
-                    <StyledTableCell align="center">{rowKey}</StyledTableCell>
+                    <Tooltip
+                      style={{ cursor: "pointer" }}
+                      title={(() => {
+                        if (rowKey === "sum V") {
+                          return "OR function of vectors that relate to the observed primary output";
+                        }
+
+                        if (rowKey === "good") {
+                          return "Good values simulation";
+                        }
+
+                        if (rowKey === "fault") {
+                          return "Fault detection vector";
+                        }
+                      })()}
+                    >
+                      <StyledTableCell align="center">{rowKey}</StyledTableCell>
+                    </Tooltip>
                     {Object.keys(output2[input][rowKey]).map(
                       (cellKey, cellIndex) => {
                         const value = output2[input][rowKey][cellKey];
                         const cell = value === 0 && Number(rowKey) ? "" : value;
 
-                        return <BinaryCell key={`${cellIndex}${cell}`} value={cell} />;
+                        return (
+                          <BinaryCell
+                            key={`${cellIndex}${cell}`}
+                            value={cell}
+                          />
+                        );
                       }
                     )}
                     {dVec?.[input]?.[rowKey]?.inputs?.map((cell: number) => {
@@ -210,12 +291,12 @@ export const Json = () => {
                       );
                     })}
 
-                    {/* {dVec?.[input]?.[rowKey]?.d_vec && (
+                    {dVec?.[input]?.[rowKey]?.i_set && (
                       <BinaryCell
-                        key={dVec?.[input]?.[rowKey]?.d_vec?.join("").slice(-2)}
-                        value={"_"}
+                        key={dVec?.[input]?.[rowKey]?.i_set?.join("")}
+                        value={dVec?.[input]?.[rowKey]?.i_set?.join("")}
                       />
-                    )} */}
+                    )}
 
                     {dVec?.[input]?.[rowKey]?.d_vec && (
                       <BinaryCell
