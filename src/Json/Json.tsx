@@ -28,15 +28,15 @@ import { Output, StyledTableCell } from "../Vector/Vector.styled";
 import { BinaryCell, GradientCell, TabPanel, TableCell } from "../components";
 import CONFIGURATION_EXAMPLE from "./configuration-example.json";
 import { Scheme } from "./utils";
-// import { getIntegral } from "./calculateMainTable";
 import { FalseSimulationMatrix } from "./FalseSimulationMatrix";
 import { GapCell } from "./FalseSimulationMatrix.styled";
+import { calcFormula, calcIntegral, countQ } from "./calculateMainTable";
 
 const customColumnNames = [
   { label: "Input", colSpan: 2 },
   { label: "I-set", tooltip: "Input Set" },
-  { label: "DV", tooltip: "Deductive Vector" },
   { label: "LV", tooltip: "Logic Vector" },
+  { label: "DV", tooltip: "Deductive Vector" },
 ];
 
 export const Json = () => {
@@ -93,6 +93,8 @@ export const Json = () => {
   const [dVec] = useState<any>({});
   const [falseSimulationMatrix] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [superIntegral, setSuperIntegral] = useState<any>({});
+  const [q] = useState<any>({});
 
   const handleGenerate = async () => {
     setIsLoading(true);
@@ -111,9 +113,9 @@ export const Json = () => {
       const output2 = inputs_obj.reduce((acc, input) => {
         acc[input] = scheme.simulationMatrixForInput(input);
         dVec[input] = JSON.parse(JSON.stringify(scheme?.components));
-        // falseSimulationMatrix[input] = []
 
-        // for (let c = 1; c < scheme.modeling_vector.length; c++) {
+        q[input] = countQ(acc[input]["sum V"]);
+
         // Initialize row if it doesn't exist
         if (!falseSimulationMatrix[input]) {
           falseSimulationMatrix[input] = {};
@@ -126,52 +128,38 @@ export const Json = () => {
         return acc;
       }, {});
 
-      // Object.keys(falseSimulationMatrix)
-      // getIntegral = ({ scheme, false_simulation_matrix })
+      const integral = calcIntegral({
+        scheme,
+        falseSimulationMatrix,
+      });
 
-      // const integral = {};
+      const superIntegral = calcFormula({ data: integral, scheme });
 
-      // for (let j = 1; j < scheme.modeling_vector.length; j++) {
-      //   let k = `F${j}`;
-
-      //   // Create a vector indicating non-duplicated values
-      //   let vec = falseSimulationMatrix[k].map((item, index, arr) => {
-      //     return arr.indexOf(item) === index;
-      //   });
-
-      //   // Object.keys(temp1).map(a => temp1[a].fault[1])
-
-      //   // Set empty string positions to false
-      //   vec = vec.map((value, index) => {
-      //     return falseSimulationMatrix[k][index] === "" ? false : value;
-      //   });
-
-      //   // Calculate cumulative sum
-      //   integral[k] = vec.reduce((acc, curr, idx) => {
-      //     if (idx === 0) return [curr ? 1 : 0];
-      //     return [...acc, (curr ? 1 : 0) + acc[idx - 1]];
-      //   }, []);
-      // }
-
+      setSuperIntegral(superIntegral);
       setTruthTable(inputs_obj);
 
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
 
-      console.log("Output:", {
-        parsedJson,
-        scheme,
-        inputs_obj,
-        output2,
-        dVec,
-        falseSimulationMatrix,
-        truthTable,
-      });
+      // console.log("Output:", {
+      //   // parsedJson,
+      //   // scheme,
+      //   // inputs_obj,
+      //   output2,
+      //   dVec,
+      //   falseSimulationMatrix,
+      //   truthTable,
+      //   superIntegral,
+      //   // transformed,
+      //   integral,
+      //   q,
+      // });
 
       setOutput2(output2);
-      setIsLoading(false);
     } catch (error) {
       setError("This JSON cannot be processed, try with another one");
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -220,6 +208,9 @@ export const Json = () => {
       <FalseSimulationMatrix
         ref={typographyRef}
         falseSimulationMatrix={falseSimulationMatrix}
+        truthTable={truthTable}
+        q={q}
+        superIntegral={superIntegral}
       />
       <Output>
         {Object.keys(output2).length > 0 && (

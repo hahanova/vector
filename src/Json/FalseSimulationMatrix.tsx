@@ -6,7 +6,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { BinaryCell } from "../components";
+import { BinaryCell, TableCell } from "../components";
 import { StyledTableCell, Table } from "../Vector/Vector.styled";
 import { Box, GapCell } from "./FalseSimulationMatrix.styled";
 
@@ -17,11 +17,21 @@ export interface FalseSimulationMatrix {
   };
 }
 
+interface Props {
+  falseSimulationMatrix: FalseSimulationMatrix;
+  ref: React.RefObject<HTMLDivElement>;
+  truthTable: Array<string>;
+}
+
 export const FalseSimulationMatrix = ({
   falseSimulationMatrix,
   ref,
-}: FalseSimulationMatrix) => {
+  truthTable,
+  q,
+  superIntegral,
+}: Props) => {
   const theme = useTheme();
+
   if (!falseSimulationMatrix || Object.keys(falseSimulationMatrix).length === 0)
     return;
 
@@ -46,6 +56,9 @@ export const FalseSimulationMatrix = ({
         <Table>
           <TableHead>
             <TableRow>
+              <GapCell hasNoBorder></GapCell>
+              <GapCell hasNoBorder></GapCell>
+              <GapCell hasNoBorder></GapCell>
               <GapCell></GapCell>
               <StyledTableCell
                 colSpan={12}
@@ -69,6 +82,12 @@ export const FalseSimulationMatrix = ({
             </TableRow>
             <TableRow>
               <GapCell></GapCell>
+
+              <StyledTableCell align="center">I</StyledTableCell>
+              <StyledTableCell align="center">Q</StyledTableCell>
+
+              <GapCell></GapCell>
+
               {faultKeys.map((key) => (
                 <StyledTableCell key={`fault${key}`}>{key}</StyledTableCell>
               ))}
@@ -79,16 +98,25 @@ export const FalseSimulationMatrix = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {keys.map((key) => (
+            {truthTable?.map((key, index) => (
               <TableRow key={key}>
                 <StyledTableCell align="center">{key}</StyledTableCell>
+
+                <TableCell align="center">{superIntegral[index]}</TableCell>
+
+                <TableCell align="center">{q[key]}</TableCell>
+
+                <GapCell></GapCell>
+
                 {faultKeys.map((faultKey) => (
                   <BinaryCell
                     value={falseSimulationMatrix[key].fault[faultKey]}
                     key={faultKey}
                   />
                 ))}
+
                 <GapCell></GapCell>
+
                 {modelingKeys.map((modelingKey) => (
                   <BinaryCell
                     value={falseSimulationMatrix[key].modeling[modelingKey]}

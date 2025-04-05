@@ -21,6 +21,18 @@ npm start
 
 ## 🔧 Deploy the app
 
+### Using Vercel
+
+- Bump version:
+```
+npm version minor
+```
+- Push the changes to the `main` branch, and they automatically will be deployed
+
+- Go to `https://vector-simulation.vercel.app/` to check if everything is working, check the published version in the console to be sure.
+
+### Using Surge (outdated, use Vercel)
+
 - Bump version:
 ```
 npm version minor
