@@ -1,3 +1,6 @@
+import { getTruthTable } from "../Vector/utils";
+import { Scheme } from "./utils";
+
 export function transformToMatrix(data) {
   const sortedKeys = Object.keys(data).sort();
 
@@ -75,4 +78,51 @@ const countOnes = (obj: Record<string, number | string>): number => {
 
 export const countQ = (sumV: Record<string, number | string>) => {
   return (countOnes(sumV) / (Object.keys(sumV).length * 2)).toFixed(2);
+};
+
+export const getValues = async (parsedJson) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const scheme = Scheme.from_dict(parsedJson);
+      const inputs_obj = getTruthTable(scheme.inputs.length);
+
+      const output2 = {};
+      const falseSimulationMatrix = {};
+      const dVec = {};
+      const q = {};
+
+      inputs_obj.forEach((input) => {
+        const acc = {};
+        acc[input] = scheme.simulationMatrixForInput(input);
+        dVec[input] = JSON.parse(JSON.stringify(scheme?.components));
+        q[input] = countQ(acc[input]["sum V"]);
+
+        if (!falseSimulationMatrix[input]) {
+          falseSimulationMatrix[input] = {};
+        }
+
+        falseSimulationMatrix[input]["fault"] = acc[input]["fault"];
+        falseSimulationMatrix[input]["modeling"] = acc[input]["good"];
+
+        Object.assign(output2, acc);
+      });
+
+      const integral = calcIntegral({
+        scheme,
+        falseSimulationMatrix,
+      });
+
+      const superIntegral = calcFormula({ data: integral, scheme });
+
+      resolve({
+        superIntegral,
+        inputs_obj,
+        output2,
+        q,
+        falseSimulationMatrix,
+        scheme,
+        dVec,
+      });
+    }, 1000);
+  });
 };

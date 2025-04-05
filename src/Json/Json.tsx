@@ -22,15 +22,13 @@ import {
   Textarea,
   Wrapper,
 } from "./Json.styled";
-import { getTruthTable } from "../Vector/utils";
 
 import { Output, StyledTableCell } from "../Vector/Vector.styled";
 import { BinaryCell, GradientCell, TabPanel, TableCell } from "../components";
 import CONFIGURATION_EXAMPLE from "./configuration-example.json";
-import { Scheme } from "./utils";
 import { FalseSimulationMatrix } from "./FalseSimulationMatrix";
 import { GapCell } from "./FalseSimulationMatrix.styled";
-import { calcFormula, calcIntegral, countQ } from "./calculateMainTable";
+import { getValues } from "./calculateMainTable";
 
 const customColumnNames = [
   { label: "Input", colSpan: 2 },
@@ -90,15 +88,18 @@ export const Json = () => {
   }, [shouldScrollToTop]);
 
   const [output2, setOutput2] = useState<any>([]);
-  const [dVec] = useState<any>({});
-  const [falseSimulationMatrix] = useState<any>({});
+  const [dVec, setDVec] = useState<any>({});
+  const [falseSimulationMatrix, setFalseSimulationMatrix] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
   const [superIntegral, setSuperIntegral] = useState<any>({});
-  const [q] = useState<any>({});
+  const [q, setQ] = useState<any>({});
 
   const handleGenerate = async () => {
     setIsLoading(true);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+
     await new Promise((resolve) => setTimeout(resolve, 0));
+
     const parsedJson = validateAndParseJson(value);
 
     if (!parsedJson) return;
@@ -108,52 +109,20 @@ export const Json = () => {
     setValue(formattedJson);
 
     try {
-      const scheme = Scheme.from_dict(parsedJson);
-      const inputs_obj = getTruthTable(scheme.inputs.length);
-      const output2 = inputs_obj.reduce((acc, input) => {
-        acc[input] = scheme.simulationMatrixForInput(input);
-        dVec[input] = JSON.parse(JSON.stringify(scheme?.components));
-
-        q[input] = countQ(acc[input]["sum V"]);
-
-        // Initialize row if it doesn't exist
-        if (!falseSimulationMatrix[input]) {
-          falseSimulationMatrix[input] = {};
-        }
-
-        // Set values similar to pandas .at[]
-        falseSimulationMatrix[input]["fault"] = acc[input]["fault"];
-        falseSimulationMatrix[input]["modeling"] = acc[input]["good"];
-
-        return acc;
-      }, {});
-
-      const integral = calcIntegral({
-        scheme,
+      const {
+        output2,
         falseSimulationMatrix,
-      });
+        dVec,
+        q,
+        superIntegral,
+        inputs_obj,
+      } = await getValues(parsedJson);
 
-      const superIntegral = calcFormula({ data: integral, scheme });
-
+      setFalseSimulationMatrix(falseSimulationMatrix);
+      setQ(q);
+      setDVec(dVec);
       setSuperIntegral(superIntegral);
       setTruthTable(inputs_obj);
-
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-
-      // console.log("Output:", {
-      //   // parsedJson,
-      //   // scheme,
-      //   // inputs_obj,
-      //   output2,
-      //   dVec,
-      //   falseSimulationMatrix,
-      //   truthTable,
-      //   superIntegral,
-      //   // transformed,
-      //   integral,
-      //   q,
-      // });
-
       setOutput2(output2);
     } catch (error) {
       setError("This JSON cannot be processed, try with another one");
@@ -200,9 +169,11 @@ export const Json = () => {
         </Button>
       </ButtonWrapper>
       {isLoading && (
-        <Box style={{ textAlign: "center" }}>
+        <Box style={{ textAlign: "center" }} sx={{ mt: 4 }}>
           <CircularProgress />
-          <Typography>We are creating a vector fault simulation...</Typography>
+          <Typography sx={{ mt: 4 }}>
+            We are creating a vector fault simulation...
+          </Typography>
         </Box>
       )}
       <FalseSimulationMatrix
