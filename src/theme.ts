@@ -4,6 +4,8 @@ declare module "@mui/material" {
   interface TypeBackground {
     zeroCell: string;
     field: string;
+    styledCell: string;
+    highlightCell: string;
   }
 
   interface Color {
@@ -16,6 +18,8 @@ export const theme = createTheme({
     background: {
       zeroCell: "#333333",
       field: "#242424",
+      styledCell: '#58516b',
+      highlightCell: "#17161c",
     },
     mode: "dark",
     primary: {

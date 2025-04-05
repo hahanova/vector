@@ -1,7 +1,14 @@
-import { TableHead, TableRow, TableBody } from "@mui/material";
+import {
+  TableHead,
+  TableRow,
+  TableBody,
+  useTheme,
+  Typography,
+} from "@mui/material";
 
-import { BinaryCell, TableCell } from "../components";
+import { BinaryCell } from "../components";
 import { StyledTableCell, Table } from "../Vector/Vector.styled";
+import { Box, GapCell } from "./FalseSimulationMatrix.styled";
 
 export interface FalseSimulationMatrix {
   [key: string]: {
@@ -13,6 +20,7 @@ export interface FalseSimulationMatrix {
 export const FalseSimulationMatrix = ({
   falseSimulationMatrix,
 }: FalseSimulationMatrix) => {
+  const theme = useTheme();
   if (!falseSimulationMatrix || Object.keys(falseSimulationMatrix).length === 0)
     return;
 
@@ -23,37 +31,68 @@ export const FalseSimulationMatrix = ({
   );
 
   return (
-    <Table sx={{ mt: 4 }}>
-      <TableHead>
-        <TableRow>
-          <TableCell></TableCell>
-          {faultKeys.map((key) => (
-            <StyledTableCell key={`fault${key}`}>F{key}</StyledTableCell>
-          ))}
-          {modelingKeys.map((key) => (
-            <StyledTableCell key={`modeling${key}`}>M{key}</StyledTableCell>
-          ))}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {keys.map((key) => (
-          <TableRow key={key}>
-            <StyledTableCell align="center">{key}</StyledTableCell>
-            {faultKeys.map((faultKey) => (
-              <BinaryCell
-                value={falseSimulationMatrix[key].fault[faultKey]}
-                key={faultKey}
-              />
+    <>
+      <Typography variant="h3" component="h1" align="center" sx={{ mt: 7, mb: 6 }}>
+        Circuit Vector Fault Simulation
+      </Typography>
+      <Box>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <GapCell></GapCell>
+              <StyledTableCell
+                colSpan={12}
+                align="center"
+                style={{
+                  background: `${theme.palette.background.styledCell}80`,
+                }}
+              >
+                Fault Detected Table
+              </StyledTableCell>
+              <GapCell></GapCell>
+              <StyledTableCell
+                colSpan={12}
+                align="center"
+                style={{
+                  background: `${theme.palette.background.styledCell}80`,
+                }}
+              >
+                Good Value Simulation Table
+              </StyledTableCell>
+            </TableRow>
+            <TableRow>
+              <GapCell></GapCell>
+              {faultKeys.map((key) => (
+                <StyledTableCell key={`fault${key}`}>{key}</StyledTableCell>
+              ))}
+              <GapCell></GapCell>
+              {modelingKeys.map((key) => (
+                <StyledTableCell key={`modeling${key}`}>{key}</StyledTableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {keys.map((key) => (
+              <TableRow key={key}>
+                <StyledTableCell align="center">{key}</StyledTableCell>
+                {faultKeys.map((faultKey) => (
+                  <BinaryCell
+                    value={falseSimulationMatrix[key].fault[faultKey]}
+                    key={faultKey}
+                  />
+                ))}
+                <GapCell></GapCell>
+                {modelingKeys.map((modelingKey) => (
+                  <BinaryCell
+                    value={falseSimulationMatrix[key].modeling[modelingKey]}
+                    key={modelingKey}
+                  />
+                ))}
+              </TableRow>
             ))}
-            {modelingKeys.map((modelingKey) => (
-              <BinaryCell
-                value={falseSimulationMatrix[key].modeling[modelingKey]}
-                key={modelingKey}
-              />
-            ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+          </TableBody>
+        </Table>
+      </Box>
+    </>
   );
 };

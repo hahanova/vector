@@ -12,6 +12,7 @@ import {
   Tabs,
   Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
 
 import {
@@ -29,6 +30,7 @@ import CONFIGURATION_EXAMPLE from "./configuration-example.json";
 import { Scheme } from "./utils";
 // import { getIntegral } from "./calculateMainTable";
 import { FalseSimulationMatrix } from "./FalseSimulationMatrix";
+import { GapCell } from "./FalseSimulationMatrix.styled";
 
 const customColumnNames = [
   { label: "Input", colSpan: 2 },
@@ -38,6 +40,7 @@ const customColumnNames = [
 ];
 
 export const Json = () => {
+  const theme = useTheme();
   const [value, setValue] = useState("");
   const [error, setError] = useState("");
   const [tab, setTab] = useState(0);
@@ -205,11 +208,21 @@ export const Json = () => {
       {isLoading && (
         <Box style={{ textAlign: "center" }}>
           <CircularProgress />
-          <Typography>We are creating a vector simulation...</Typography>
+          <Typography>We are creating a vector fault simulation...</Typography>
         </Box>
       )}
       <FalseSimulationMatrix falseSimulationMatrix={falseSimulationMatrix} />
       <Output>
+        {Object.keys(output2).length > 0 && (
+          <Typography
+            variant="h3"
+            component="h2"
+            align="center"
+            sx={{ mb: 4, mt: 4 }}
+          >
+            Fault Simulation on Test Set
+          </Typography>
+        )}
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={tab}
@@ -228,7 +241,29 @@ export const Json = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell></TableCell>
+                  <GapCell></GapCell>
+                  <StyledTableCell
+                    colSpan={12}
+                    align="center"
+                    style={{
+                      background: `${theme.palette.background.styledCell}80`,
+                    }}
+                  >
+                    Fault Simulation Matrix
+                  </StyledTableCell>
+                  <GapCell></GapCell>
+                  <StyledTableCell
+                    colSpan={12}
+                    align="center"
+                    style={{
+                      background: `${theme.palette.background.styledCell}80`,
+                    }}
+                  >
+                    Modeling Deductive Vectors
+                  </StyledTableCell>
+                </TableRow>
+                <TableRow>
+                  <GapCell></GapCell>
                   {Object.keys(output2?.[input]?.["1"] || {}).map(
                     (char, index) => (
                       <StyledTableCell align="center" key={index} isThin>
@@ -236,6 +271,7 @@ export const Json = () => {
                       </StyledTableCell>
                     )
                   )}
+                  <GapCell></GapCell>
                   {customColumnNames.map(({ label, tooltip, colSpan = 1 }) => (
                     <Tooltip
                       title={tooltip}
@@ -283,6 +319,9 @@ export const Json = () => {
                         );
                       }
                     )}
+                    <GapCell
+                      hasNoBorder={!dVec?.[input]?.[rowKey]?.inputs}
+                    ></GapCell>
                     {dVec?.[input]?.[rowKey]?.inputs?.map((cell: number) => {
                       return (
                         <GradientCell align="center" key={cell} value={cell}>
