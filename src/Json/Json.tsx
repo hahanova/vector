@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -35,8 +35,8 @@ import { GapCell } from "./FalseSimulationMatrix.styled";
 const customColumnNames = [
   { label: "Input", colSpan: 2 },
   { label: "I-set", tooltip: "Input Set" },
-  { label: "LV", tooltip: "Logic Vector" },
   { label: "DV", tooltip: "Deductive Vector" },
+  { label: "LV", tooltip: "Logic Vector" },
 ];
 
 export const Json = () => {
@@ -71,9 +71,14 @@ export const Json = () => {
     }
   };
 
+  const typographyRef = useRef(null);
+
   useLayoutEffect(() => {
-    if (truthTable) {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    if (truthTable && typographyRef.current) {
+      typographyRef.current.scrollIntoView({
+        top: document.body.scrollHeight,
+        behavior: "smooth",
+      });
     }
   }, [truthTable]);
 
@@ -83,6 +88,7 @@ export const Json = () => {
       setShouldScrollToTop(false);
     }
   }, [shouldScrollToTop]);
+
   const [output2, setOutput2] = useState<any>([]);
   const [dVec] = useState<any>({});
   const [falseSimulationMatrix] = useState<any>({});
@@ -211,7 +217,10 @@ export const Json = () => {
           <Typography>We are creating a vector fault simulation...</Typography>
         </Box>
       )}
-      <FalseSimulationMatrix falseSimulationMatrix={falseSimulationMatrix} />
+      <FalseSimulationMatrix
+        ref={typographyRef}
+        falseSimulationMatrix={falseSimulationMatrix}
+      />
       <Output>
         {Object.keys(output2).length > 0 && (
           <Typography
@@ -337,13 +346,6 @@ export const Json = () => {
                       />
                     )}
 
-                    {dVec?.[input]?.[rowKey]?.d_vec && (
-                      <BinaryCell
-                        key={dVec?.[input]?.[rowKey]?.d_vec?.join("")}
-                        value={dVec?.[input]?.[rowKey]?.d_vec?.join("")}
-                      />
-                    )}
-
                     {dVec?.[input]?.[rowKey]?.vector && (
                       <TableCell
                         align="center"
@@ -353,6 +355,13 @@ export const Json = () => {
                           {dVec?.[input]?.[rowKey]?.vector}
                         </Typography>
                       </TableCell>
+                    )}
+
+                    {dVec?.[input]?.[rowKey]?.d_vec && (
+                      <BinaryCell
+                        key={dVec?.[input]?.[rowKey]?.d_vec?.join("")}
+                        value={dVec?.[input]?.[rowKey]?.d_vec?.join("")}
+                      />
                     )}
                   </TableRow>
                 ))}

@@ -19,6 +19,7 @@ export interface FalseSimulationMatrix {
 
 export const FalseSimulationMatrix = ({
   falseSimulationMatrix,
+  ref,
 }: FalseSimulationMatrix) => {
   const theme = useTheme();
   if (!falseSimulationMatrix || Object.keys(falseSimulationMatrix).length === 0)
@@ -32,7 +33,13 @@ export const FalseSimulationMatrix = ({
 
   return (
     <>
-      <Typography variant="h3" component="h1" align="center" sx={{ mt: 7, mb: 6 }}>
+      <div ref={ref}></div>
+      <Typography
+        variant="h3"
+        component="h1"
+        align="center"
+        sx={{ mt: 7, mb: 6 }}
+      >
         Circuit Vector Fault Simulation
       </Typography>
       <Box>
